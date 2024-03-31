@@ -1,0 +1,142 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Calculator.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+        xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
+        xmlns:models="clr-namespace:Calculator.Models"
+        xmlns:converters="clr-namespace:Calculator.Converters"
+        mc:Ignorable="d" Width="400" Height="600"
+        MinHeight="400"
+        MinWidth="250"
+        x:Name="Window"
+        x:Class="Calculator.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Calculator">
+    <i:Interaction.Behaviors>
+        <ia:DataTriggerBehavior Binding="{Binding IncorrectInput}" 
+                                ComparisonCondition="Equal" 
+                                Value="True">
+            <ia:ChangePropertyAction TargetObject="Window" 
+                                     PropertyName="Title"
+                                     Value="(Error!) Calculator" />
+        </ia:DataTriggerBehavior>
+        <ia:DataTriggerBehavior Binding="{Binding IncorrectInput}" 
+                                ComparisonCondition="LessThanOrEqual" 
+                                Value="False">
+            <ia:ChangePropertyAction TargetObject="Window" 
+                                     PropertyName="Title"
+                                     Value="Calculator" />
+        </ia:DataTriggerBehavior>
+    </i:Interaction.Behaviors>
+    
+    <Window.Resources>
+        <converters:ButtonSymbolToStringConverter x:Key="ButtonSymbolToStringConverter"/>
+    </Window.Resources>
+    
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Command" Value="{Binding HandleButtonInputCommand}"/>
+            <Setter Property="Content" Value="{Binding $self.CommandParameter, Converter={StaticResource ButtonSymbolToStringConverter}}"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Background" Value="DimGray"/>
+            <Setter Property="FontSize" Value="18"/>
+        </Style>
+        <Style Selector="Button.LightGray">
+            <Setter Property="Background" Value="Gray"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="*,Auto,Auto">
+        <Border Margin="-3,-3,-3,0" Grid.Row="0" Background="#727272" CornerRadius="0,0,8,8" BorderThickness="4,4,4,2" BorderBrush="Gray">
+            <ScrollViewer VerticalScrollBarVisibility="Visible"
+                          HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding History}" VerticalAlignment="Bottom">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,4,0,-2" Padding="12,0" BorderThickness="0,0,0,2" BorderBrush="DimGray">
+                                <Border.Styles>
+                                    <Style Selector="Border:pointerover">
+                                        <Setter Property="Background" Value="Gray"/>
+                                    </Style>
+                                    <Style Selector="Border">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                    </Style>
+                                    <Style Selector="TextBlock">
+                                        <Setter Property="FontFamily" Value="Consolas"/>
+                                        <Setter Property="FontSize" Value="20"/>
+                                    </Style>
+                                </Border.Styles>
+                                <Grid ColumnDefinitions="*,Auto,Auto">
+                                    <Border Grid.Column="0" x:Name="ExpressionBorder" Background="Transparent">
+                                        <i:Interaction.Behaviors>
+                                            <ia:EventTriggerBehavior EventName="PointerPressed" SourceObject="ExpressionBorder">
+                                                <ia:InvokeCommandAction Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SetCurrentFormulaFromExpressionCommand, FallbackValue=null}"
+                                                                        CommandParameter="{Binding}"/>
+                                            </ia:EventTriggerBehavior>
+                                        </i:Interaction.Behaviors>
+                                        <TextBlock Text="{Binding Expression}"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="=" Margin="0,0,6,0"/>
+                                    <Border Grid.Column="2" x:Name="ResultBorder" Background="Transparent">
+                                        <i:Interaction.Behaviors>
+                                            <ia:EventTriggerBehavior EventName="PointerPressed" SourceObject="ResultBorder">
+                                                <ia:InvokeCommandAction Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SetCurrentFormulaFromResultCommand, FallbackValue=null}"
+                                                                        CommandParameter="{Binding}"/>
+                                            </ia:EventTriggerBehavior>
+                                        </i:Interaction.Behaviors>
+                                        <TextBlock Text="{Binding Result}"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+        <Border Grid.Row="1" Margin="12" Background="DimGray" CornerRadius="4">
+            <TextBox FontSize="24" Padding="0" FontFamily="Consolas" Text="{Binding CurrentFormula}"/>
+        </Border>
+        <Border Margin="-3,0,-3,-3" Grid.Row="2" Height="250"  BorderBrush="Gray" BorderThickness="4,2,4,4" Padding="12" CornerRadius="8">
+            <Grid  MaxWidth="600"
+                   RowDefinitions="*,*,*,*,*" ColumnDefinitions="*,*,*,*,*">
+            <Button Grid.Row="0" Grid.Column="0" CommandParameter="{x:Static models:ButtonSymbol.Clear}"/>
+            <Button Grid.Row="0" Grid.Column="1" CommandParameter="{x:Static models:ButtonSymbol.LeftParenthesis}"/>
+            <Button Grid.Row="0" Grid.Column="2" CommandParameter="{x:Static models:ButtonSymbol.RightParenthesis}"/>
+            <Button Grid.Row="0" Grid.Column="3" CommandParameter="{x:Static models:ButtonSymbol.Modulus}"/>
+            <Button Grid.Row="0" Grid.Column="4" CommandParameter="{x:Static models:ButtonSymbol.Pi}"/>
+            
+            <Button Grid.Row="1" Grid.Column="0" CommandParameter="{x:Static models:ButtonSymbol.Digit7}" Classes="LightGray"/>
+            <Button Grid.Row="1" Grid.Column="1" CommandParameter="{x:Static models:ButtonSymbol.Digit8}" Classes="LightGray"/>
+            <Button Grid.Row="1" Grid.Column="2" CommandParameter="{x:Static models:ButtonSymbol.Digit9}" Classes="LightGray"/>
+            <Button Grid.Row="1" Grid.Column="3" CommandParameter="{x:Static models:ButtonSymbol.Divide}"/>
+            <Button Grid.Row="1" Grid.Column="4" CommandParameter="{x:Static models:ButtonSymbol.Root}"/>
+            
+            <Button Grid.Row="2" Grid.Column="0" CommandParameter="{x:Static models:ButtonSymbol.Digit4}" Classes="LightGray"/>
+            <Button Grid.Row="2" Grid.Column="1" CommandParameter="{x:Static models:ButtonSymbol.Digit5}" Classes="LightGray"/>
+            <Button Grid.Row="2" Grid.Column="2" CommandParameter="{x:Static models:ButtonSymbol.Digit6}" Classes="LightGray"/>
+            <Button Grid.Row="2" Grid.Column="3" CommandParameter="{x:Static models:ButtonSymbol.Multiply}"/>
+            <Button Grid.Row="2" Grid.Column="4" CommandParameter="{x:Static models:ButtonSymbol.Square}"/>
+            
+            <Button Grid.Row="3" Grid.Column="0" CommandParameter="{x:Static models:ButtonSymbol.Digit1}" Classes="LightGray"/>
+            <Button Grid.Row="3" Grid.Column="1" CommandParameter="{x:Static models:ButtonSymbol.Digit2}" Classes="LightGray"/>
+            <Button Grid.Row="3" Grid.Column="2" CommandParameter="{x:Static models:ButtonSymbol.Digit3}" Classes="LightGray"/>
+            <Button Grid.Row="3" Grid.Column="3" CommandParameter="{x:Static models:ButtonSymbol.Minus}"/>
+            <Button Grid.Row="3" Grid.Column="4" CommandParameter="{x:Static models:ButtonSymbol.Result}" Grid.RowSpan="2" Background="Orange"/>
+            
+            <Button Grid.Row="4" Grid.Column="0" CommandParameter="{x:Static models:ButtonSymbol.Digit0}" Classes="LightGray"/>
+            <Button Grid.Row="4" Grid.Column="1" CommandParameter="{x:Static models:ButtonSymbol.Dot}"/>
+            <Button Grid.Row="4" Grid.Column="2" CommandParameter="{x:Static models:ButtonSymbol.Percentage}"/>
+            <Button Grid.Row="4" Grid.Column="3" CommandParameter="{x:Static models:ButtonSymbol.Plus}"/>
+        </Grid>
+        </Border>
+    </Grid>
+    
+</Window>
